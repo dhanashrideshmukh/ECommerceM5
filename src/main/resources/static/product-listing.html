@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Products</title>	
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css"></head>
+<body>
+<div>
+    <form class="form-inline" style="margin:20px 20px 20px 20px" id="productForm">
+	<h2>Products</h2>
+
+	<table class="data-products-js table table-striped" >
+		<thead>
+			<th>Id</th>
+			<th>Name</th>
+			<th>Price</th>
+			<th>Update</th>
+			<th>Delete</th>
+			<th>Basket?</th>
+		</thead>	
+		<tbody></tbody>	
+	</table>
+
+	<!--  <button id="fetchProducts" class="btn btn-default" type="button">Refresh</button><BR><BR><BR>-->
+	
+
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<script type="text/javascript">
+
+		//$("#fetchProducts").bind("click", function() {
+
+			$.get("http://localhost:8080/products", function(data) {
+
+				$(".data-products-js").find("tbody").empty();
+				$.each(data, function(i, product) {
+
+					$(".data-products-js").find("tbody").append(
+						"<tr><td>" + product.id + "</td>" +
+						"<td>" + product.name + "</td>" +
+						"<td>" + product.price + "</td>" + 
+						"<td><button type='button' onclick = 'updateProduct("+product.id+")'>Update</button></td>" +
+						"<td><button type='button' onclick = 'deleteProduct("+product.id+")'>Delete</button></td>" + 
+						"<td><button type='button' onclick = 'addToBasket(" + "\"" +product.name+"\"," +product.price+")'>Add To Basket</button></td>" + 
+						"</tr>");
+				});			
+			
+			});
+		//});
+		
+		
+		function LoadProducts(){
+			$.get("http://localhost:8080/products", function(data) {
+
+				$(".data-products-js").find("tbody").empty();
+				$.each(data, function(i, product) {
+
+					$(".data-products-js").find("tbody").append(
+						"<tr><td>" + product.id + "</td>" +
+						"<td>" + product.name + "</td>" +
+						"<td>" + product.price + "</td>" + 
+						"<td><button type='button' onclick = 'updateProduct("+product.id+")'>Update</button></td>" +
+						"<td><button type='button' onclick = 'deleteProduct("+product.id+")'>Delete</button></td>" + 
+						"<td><button type='button' onclick = 'addToBasket(" + "\"" +product.name+"\"," +product.price+")'>Add To Basket</button></td>" + 
+						"</tr>");
+				});			
+
+			});
+		};
+		function updateProduct(id){
+			 $.ajax({
+	                url: 'http://localhost:8080/products/'+id,
+	                method: 'GET',	                
+	                success: function (data) {
+	                    $("#name").val(data.name);
+	                    $("#price").val(data.price);
+	                    $("#txtId").val(data.id);	                    
+	                },
+	                error: function (error) {
+	                    alert(error);
+	                }
+	            })
+		}
+		function deleteProduct(id){
+			
+				$.ajax({
+	                url: 'http://localhost:8080/products/'+id,
+	                method: 'DELETE',
+	                success: function () {
+	                    alert('record has been deleted');
+	                    //LoadProducts();
+	                },
+	                error: function (error) {
+	                    alert(error);
+	                }
+	            })
+		};
+		function addToBasket(productName,price){
+			
+			 var formData = {		    		  
+				        name : productName,
+				        price :  price,
+				        userid:99
+				      }
+				     
+	                  var customUrl = "http://localhost:8080/basket";
+	                  var methodName = "POST";
+		             
+				      // DO POST
+				      $.ajax({
+				      method : methodName,
+				      contentType : "application/json",
+				      url :  customUrl,
+				      data : JSON.stringify(formData),
+				      dataType : 'json',
+				      success : function(result) { 
+				        console.log(result);
+				      },
+				      error : function(e) {		        
+				        console.log("ERROR: ", e);
+				      }
+				    });
+			};
+		
+		
+		
+		function postNewProduct(){
+		      
+		      // PREPARE FORM DATA
+		      var formData = {		    		  
+		        name : $("#name").val(),
+		        price :  $("#price").val()
+		      }
+		      
+		      var productId = $('#txtId').val();
+		      var customUrl = "http://localhost:8080/products";
+		      var methodName = "";
+              if(productId){
+                  //update it
+                   customUrl = "http://localhost:8080/products/"+productId;
+                  methodName = "PUT";
+              }else{
+                  //save it
+                   customUrl = "http://localhost:8080/products";
+                  methodName = "POST";
+              }
+		      
+		      // DO POST
+		      $.ajax({
+		      method : methodName,
+		      contentType : "application/json",
+		      url :  customUrl,
+		      data : JSON.stringify(formData),
+		      dataType : 'json',
+		      success : function(result) {
+		        if(result.status == "Done"){
+		          $("#postResultDiv").html("<p style='background-color:#7FA7B0; color:white; padding:20px 20px 20px 20px'>" + 
+		                        "Posted Successfully! <br>" +
+		                        "---> Name = " + 
+		                        result.data.fname + " ,price = " + result.data.price + "</p>");
+		        }
+		        
+		        console.log(result);
+		      },
+		      error : function(e) {		        
+		        console.log("ERROR: ", e);
+		      }
+		    });
+		      
+		      // Reset FormData after Posting
+		      resetData();
+		      LoadProducts();
+		 
+		    }
+		    
+		    function resetData(){
+		      $("#txtId").val("");	
+		      $("#name").val("");
+		      $("#price").val("");
+		    }
+	</script>
+	
+	
+      <div class="form-group">
+      <td><input type="text" id = "txtId" hidden="true"></td>
+        <label for="name" style="margin-right:5px">Name:</label>
+        <input type="text" class="form-control" id="name" priceholder="Enter name"/>
+      </div>
+      <div class="form-group">
+        <label for="price" style="margin-left:20px; margin-right:5px">price:</label>
+        <input type="text" class="form-control" id="price" priceholder="Enter price"/>
+      </div>
+      <button id="postProduct" onclick="postNewProduct();" type="button" class="btn btn-default" style="margin-left:20px; margin-right:5px">Add Product</button>
+    </form>
+  </div>
+  
+  <div class="col-sm-7" id="postResultDiv">
+  </div>
+</body>
+</html>
+
+
+
+
+
